@@ -16,24 +16,20 @@ app.use(express.static("public"));
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// mapping adminUID -> child process
-const procs = {};
+const procs = {}; // adminUID -> child process
 
 function appendLog(uid, text) {
   try {
     const userDir = path.join(USERS_DIR, String(uid));
     if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
-    const lf = path.join(userDir, "logs.txt");
-    fs.appendFileSync(lf, `[${new Date().toISOString()}] ${text}\n`);
+    fs.appendFileSync(path.join(userDir, "logs.txt"), `[${new Date().toISOString()}] ${text}\n`);
   } catch (e) {
     console.error("Failed appendLog:", e.message);
   }
 }
 
 io.on("connection", (socket) => {
-  socket.on("join", (uid) => {
-    socket.join(String(uid));
-  });
+  socket.on("join", uid => socket.join(String(uid)));
 });
 
 app.post("/start-bot", (req, res) => {
@@ -43,7 +39,6 @@ app.post("/start-bot", (req, res) => {
   const userDir = path.join(USERS_DIR, String(admin));
   if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
 
-  // save appstate and admin.txt
   try {
     const appObj = typeof appstate === "string" ? JSON.parse(appstate) : appstate;
     fs.writeFileSync(path.join(userDir, "appstate.json"), JSON.stringify(appObj, null, 2));
@@ -52,20 +47,19 @@ app.post("/start-bot", (req, res) => {
     return res.status(400).send("❌ Invalid appstate JSON");
   }
 
-  // if already running, kill & restart
   if (procs[admin]) {
     try { procs[admin].kill(); } catch {}
   }
 
   const child = fork(path.join(__dirname, "bot.js"), [String(admin)], { silent: true });
 
-  child.stdout.on("data", (d) => {
+  child.stdout.on("data", d => {
     const text = d.toString().trim();
     appendLog(admin, text);
     io.to(String(admin)).emit("botlog", text);
   });
 
-  child.stderr.on("data", (d) => {
+  child.stderr.on("data", d => {
     const text = d.toString().trim();
     appendLog(admin, "[ERR] " + text);
     io.to(String(admin)).emit("botlog", "[ERR] " + text);
@@ -76,6 +70,17 @@ app.post("/start-bot", (req, res) => {
     appendLog(admin, m);
     io.to(String(admin)).emit("botlog", m);
     delete procs[admin];
+    // ⚡ Optional auto-restart if unexpected exit
+    if (sig !== "SIGTERM") {
+      setTimeout(() => {
+        console.log(`♻️ Auto-restarting bot for ${admin}...`);
+        fetch(`http://localhost:${PORT}/start-bot`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ admin, appstate: fs.readFileSync(path.join(userDir, "appstate.json"), "utf8") })
+        });
+      }, 2000);
+    }
   });
 
   procs[admin] = child;
@@ -97,14 +102,6 @@ app.get("/stop-bot", (req, res) => {
   } catch (e) {
     return res.status(500).send("❌ Failed to stop: " + e.message);
   }
-});
-
-app.get("/logs", (req, res) => {
-  const uid = req.query.uid;
-  if (!uid) return res.status(400).send("❌ uid missing");
-  const lf = path.join(USERS_DIR, String(uid), "logs.txt");
-  if (!fs.existsSync(lf)) return res.send("(No logs yet)");
-  res.send(fs.readFileSync(lf, "utf8"));
 });
 
 server.listen(PORT, () => console.log(`🚀 Panel running on http://localhost:${PORT}`));

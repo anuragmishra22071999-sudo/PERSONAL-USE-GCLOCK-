@@ -92,4 +92,4 @@ app.get("/logs", (req,res)=>{
   res.send(fs.readFileSync(lf,"utf8"));
 });
 
-server.listen(PORT, ()=>console.log(`🚀 ANURAG Panel running at http://localhost:${PORT}`));￼Enter
+server.listen(PORT, ()=>console.log(`🚀 ANURAG Panel running at http://localhost:${PORT}`));

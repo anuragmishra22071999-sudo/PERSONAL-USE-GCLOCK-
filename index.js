@@ -121,4 +121,4 @@ app.get('/logs', (req, res) => {
   res.send(fs.readFileSync(logFile, 'utf-8'));
 });
 
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));￼Enter
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

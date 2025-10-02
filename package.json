@@ -1,7 +1,7 @@
 {
-  "name": "nicklock-bot-panel",
+  "name": "anurag-bot-panel",
   "version": "1.0.0",
-  "description": "Messenger Group Bot with NickLock, GroupLock, EmojiLock and Live Logs Panel",
+  "description": "Facebook Messenger Group Bot Panel (ANURAG BOT)",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -9,12 +9,12 @@
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.7.2",
-    "neha-fca": "^1.0.0",
-    "fs-extra": "^11.2.0"
+    "ws3-fca": "^1.0.0",
+    "https-proxy-agent": "^7.0.2"
   },
   "engines": {
     "node": ">=16.0.0"
   },
   "author": "Anurag Mishra",
   "license": "MIT"
-}
+}￼Enter

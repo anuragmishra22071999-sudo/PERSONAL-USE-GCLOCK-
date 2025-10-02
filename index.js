@@ -19,7 +19,6 @@ const io = new Server(server, { cors: { origin: "*" } });
 // mapping adminUID -> child process
 const procs = {};
 
-// helper log persistence per user
 function appendLog(uid, text) {
   try {
     const userDir = path.join(USERS_DIR, String(uid));
@@ -40,6 +39,7 @@ io.on("connection", (socket) => {
 app.post("/start-bot", (req, res) => {
   const { appstate, admin } = req.body;
   if (!appstate || !admin) return res.status(400).send("❌ appstate or admin missing");
+
   const userDir = path.join(USERS_DIR, String(admin));
   if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
 
